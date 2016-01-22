@@ -5,20 +5,24 @@ When go webapp start, it create folder if necesssary
 
 h2. Installation
 
-Build the tool with go build
-Copy executable in go tool folder (GOROOT/pkg/tool/windows_amd64|linux|.../)
-You can use executable with *go tool generate_resources*
+* Build the tool with <code>go build generate_resources.go</code>
+* Copy executable in go tool folder (GOROOT/pkg/tool/windows_amd64|linux|.../)
+* You can use executable with *go tool generate_resources*
 
-h1. Usage
+h2. Usage
 
 
 Create a go file in your go sources files (/src) with a go:generate commentary : 
 
-//go:generate go tool generate_resources *resources_folder* *package_name* *resources_destination*
+<code>
+//go:generate go tool generate_resources _resources_folder_ _package_name_ _resources_destination_
+</code>
 
-Exemple : if you want to generate the go file in package action, your resources are in ../resources and you want to place resources in folder static_folder : 
+Example : if you want to generate the go file in package action, your resources are in ../resources and you want to place resources in folder static_folder, you'll write : 
 
+<code>
 //go:generate go tool generate_resources ../resources action static_folder
+</code>
 
 A file name autogenerate_resources.go is created in folder action with unique function init which will be called at startup.
 
