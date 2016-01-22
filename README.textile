@@ -1,0 +1,24 @@
+h1. Embed static resources in web application in go
+
+To avoid copy specific folder with resources, this tool can generate a go file containing all static data.
+When go webapp start, it create folder if necesssary
+
+h2. Installation
+
+Build the tool with go build
+Copy executable in go tool folder (GOROOT/pkg/tool/windows_amd64|linux|.../)
+You can use executable with *go tool generate_resources*
+
+h1. Usage
+
+
+Create a go file in your go sources files (/src) with a go:generate commentary : 
+
+//go:generate go tool generate_resources *resources_folder* *package_name* *resources_destination*
+
+Exemple : if you want to generate the go file in package action, your resources are in ../resources and you want to place resources in folder static_folder : 
+
+//go:generate go tool generate_resources ../resources action static_folder
+
+A file name autogenerate_resources.go is created in folder action with unique function init which will be called at startup.
+
