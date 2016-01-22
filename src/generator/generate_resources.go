@@ -1,6 +1,7 @@
 package main
 import (
     "fmt"
+	"log"
     "os"
     "path/filepath"
     "io/ioutil"
@@ -11,11 +12,16 @@ import (
 
 
 func main(){
+	if len(os.Args) != 4 {
+		log.Fatal("Impossible to autogenerate resources, miss arguments. Usage : [resources folder] [package] [target resources folder]")
+	}
     inputResourcesFolder := os.Args[1]
     // Insert generator files with data into specific package
     packageFolder := os.Args[2]
     resourcesFolder := os.Args[3]
-    outFile,_ := os.OpenFile(filepath.Join(packageFolder,"autogenerate_resources.go"),os.O_CREATE|os.O_RDWR|os.O_TRUNC,os.ModePerm)
+	log.Println("Create autogenerate for ",inputResourcesFolder,"in package",packageFolder,"with target",resourcesFolder)
+    outPath := filepath.Join(packageFolder,"autogenerate_resources.go")
+	outFile,_ := os.OpenFile(outPath,os.O_CREATE|os.O_RDWR|os.O_TRUNC,os.ModePerm)
     outFile.WriteString("package " + packageFolder + "\n")
     outFile.WriteString("import \"os\"\n")
     outFile.WriteString("import \"strings\"\n")
@@ -35,6 +41,7 @@ func main(){
     writeCode(outFile,resourcesFolder)
     outFile.WriteString("}\n")
     outFile.Close()
+	log.Println("Code generate in file",outPath)
 }
 
 func writeCode(out *os.File,resourcesFolder string){
@@ -76,7 +83,7 @@ func treat(outFile *os.File,root,dir string){
         }else{
             in := filepath.Join(root,dir,file.Name())
             data,_ := ioutil.ReadFile(in)
-            fmt.Println("Add file",in)
+            log.Println("Add file",in)
             strData := base64.StdEncoding.EncodeToString(data)
             outFile.WriteString(",\"" + strings.Replace(filepath.Join(dir,file.Name()),"\\","\\\\",-1) + "\":`" + strData  + "`")
         }
