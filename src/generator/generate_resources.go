@@ -45,6 +45,14 @@ func main(){
 }
 
 func writeCode(out *os.File,resourcesFolder string){
+    out.WriteString("for _,a:= range os.Args[1:]{\n")
+    out.WriteString("\tif a == \"-forceDeploy\"{\n")
+    out.WriteString("\t\tfmt.Println(\"Force remove folder\")\n")
+    out.WriteString("\t\tos.RemoveAll(resourcesFolder)\n")
+    out.WriteString("\t\tbreak\n")
+    out.WriteString("\t}\n")
+    out.WriteString("}\n\n")
+
     out.WriteString("if _,err := os.Open(resourcesFolder) ; err == nil{\n")
     out.WriteString("\treturn\n")
     out.WriteString("}\n")
