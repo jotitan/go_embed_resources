@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 4 {
-		log.Fatal("Impossible to autogenerate resources, miss arguments. Usage : [resources folder] [package] [target resources folder]")
+	if len(os.Args) < 4 {
+		log.Fatal("Impossible to autogenerate resources, miss arguments. Usage : [resources folder] [package] [target resources folder] [?linux]")
 	}
 	inputResourcesFolder := os.Args[1]
 	// Insert generator files with data into specific package
@@ -22,7 +22,9 @@ func main() {
 		packageName = pieces[len(pieces) - 1]
 	}
 	resourcesFolder := os.Args[3]
-	log.Println("Create autogenerate for ", inputResourcesFolder, "in package", packageFolder, "with target", resourcesFolder)
+	isLinux := len(os.Args) >=5 && os.Args[4] == "linux"
+
+	log.Println("Create autogenerate for ", inputResourcesFolder, "in package", packageFolder, "with target", resourcesFolder,"with linux",isLinux)
 	outPath := filepath.Join(packageFolder, "autogenerate_resources.go")
 	outFile, _ := os.OpenFile(outPath, os.O_CREATE | os.O_RDWR | os.O_TRUNC, os.ModePerm)
 	outFile.WriteString("package " + packageName + "\n")
@@ -38,16 +40,17 @@ func main() {
 	outFile.WriteString("func init(){\n")
 	outFile.WriteString("files := map[string]string{\"\":\"\"")
 
-	treat(outFile, inputResourcesFolder, "")
+	treat(outFile, inputResourcesFolder, "",os.PathSeparator != '\\' || isLinux)
 	outFile.WriteString("}\n\n")
 
-	writeCode(outFile, resourcesFolder)
+	writeCode(outFile, resourcesFolder,isLinux)
 	outFile.WriteString("}\n")
 	outFile.Close()
 	log.Println("Code generate in file", outPath)
 }
 
-func writeCode(out *os.File, resourcesFolder string) {
+//@param isLinux : override autodetection to force linux separator
+func writeCode(out *os.File, resourcesFolder string, isLinux bool) {
 	out.WriteString("for _,a:= range os.Args[1:]{\n")
 	out.WriteString("\tif a == \"-forceDeploy\"{\n")
 	out.WriteString("\t\tfmt.Println(\"Force remove folder\")\n")
@@ -64,10 +67,12 @@ func writeCode(out *os.File, resourcesFolder string) {
 	out.WriteString("\tif name!=\"\" {\n")
 	out.WriteString("\t\td:=resourcesFolder\n")
 	sep := ""
-	if os.PathSeparator == '\\' {
-		sep = fmt.Sprintf("\\%c", os.PathSeparator)
+	if os.PathSeparator == '\\' && !isLinux{
+		// Windows case
+		sep = "\\\\"
 	}else {
-		sep = fmt.Sprintf("%c", os.PathSeparator)
+		// Linux case
+		sep = "/"
 	}
 
 	out.WriteString(fmt.Sprintf("\t\tif idx:= strings.LastIndex(name,\"%s\") ; idx !=-1 {\n", sep))
@@ -82,21 +87,26 @@ func writeCode(out *os.File, resourcesFolder string) {
 	out.WriteString("\n")
 }
 
-func treat(outFile *os.File, root, dir string) {
+func treat(outFile *os.File, root, dir string, isLinux bool) {
 	f, _ := os.Open(filepath.Join(root, dir))
 	files, _ := f.Readdir(-1)
+
+	replacer := strings.NewReplacer("/","\\\\","\\","\\\\")
+	if(isLinux){
+		replacer = strings.NewReplacer("\\","/")
+	}
 
 	//r2,_ := regexp.Compile("//.*\r\n")
 	for _, file := range files {
 		if file.IsDir() {
 			dirName := filepath.Join(dir, file.Name())
-			treat(outFile, root, dirName)
+			treat(outFile, root, dirName,isLinux)
 		}else {
 			in := filepath.Join(root, dir, file.Name())
 			data, _ := ioutil.ReadFile(in)
 			log.Println("Add file", in)
 			strData := base64.StdEncoding.EncodeToString(data)
-			outFile.WriteString(",\"" + strings.Replace(filepath.Join(dir, file.Name()), "\\", "\\\\", -1) + "\":`" + strData + "`")
+			outFile.WriteString(",\"" + replacer.Replace(filepath.Join(dir, file.Name())) + "\":`" + strData + "`")
 		}
 	}
 }
