@@ -17,7 +17,7 @@ h2. Usage
 Create a go file in your go sources files (/src) with a go:generate commentary : 
 
 <code>
-//go:generate go tool generate_resources _resources_folder_ _package_name_ _resources_destination_
+//go:generate go tool generate_resources _resources_folder_ _package_name_ _resources_destination_ _is_linux_target_
 </code>
 
 Example : if you want to generate the go file in package action, your resources are in ../resources and you want to place resources in folder static_folder, you'll write : 
@@ -27,5 +27,7 @@ Example : if you want to generate the go file in package action, your resources 
 </code>
 
 A file name autogenerate_resources.go is created in folder action with unique function init which will be called at startup.
+
+To force build for linux target, use true at 5th position (force / instead of \\)
 
 Can you also used tool executable directly by calling him with good parameters, no need to use go generate in this case.
